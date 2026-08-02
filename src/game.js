@@ -190,7 +190,7 @@ function discardHuman(index) {
   state.waitingForDiscard = false;
   handEl.classList.add('hand-lock');
   hideCallButtons();
-  renderHand(); renderRivers(); updateCoach();
+  renderHand(); renderRivers(0); updateCoach();
 
   for (let p = 1; p < state.playerCount; p++) {
     const winningHand = [...state.hands[p], tile];
@@ -219,7 +219,7 @@ function opponentDiscard(player) {
     state.scores[player] -= 1000;
     state.riichiSticks += 1;
   }
-  renderOpponents(); renderRivers(); renderStatus();
+  renderOpponents(); renderRivers(player); renderStatus();
 
   const humanHand = [...state.hands[0], tile];
   if (isWinningHand(humanHand)) {
@@ -431,36 +431,49 @@ function positionFor(player) {
 
 function tileElement(tile, options = {}) {
   const element = document.createElement(options.button === false ? 'div' : 'button');
-  element.className = `tile suit-${tileSuit(tile)}${options.drawn ? ' drawn' : ''}${options.recommended ? ' recommended' : ''}${options.compact ? ' compact' : ''}`;
+  element.className = `tile suit-${tileSuit(tile)}${options.drawn ? ' drawn' : ''}${options.recommended ? ' recommended' : ''}${options.compact ? ' compact' : ''}${options.entering ? ' tile-arrive' : ''}`;
   element.innerHTML = tileFaceMarkup(tile);
   element.title = TILE_LABELS[tile];
   element.setAttribute('aria-label', TILE_LABELS[tile]);
   return element;
 }
 
-function renderHand() {
+function renderHand(animateDeal = false) {
   handEl.innerHTML = '';
   const best = state.mode === 'coach' && state.waitingForDiscard ? analyzeDiscards(state.hands[0], allVisible(), state.playerCount)[0]?.discard : null;
   state.hands[0].forEach((tile, index) => {
-    const element = tileElement(tile, { drawn: index === state.lastDrawnIndex, recommended: tile === best });
+    const element = tileElement(tile, { drawn: index === state.lastDrawnIndex, recommended: tile === best, entering: animateDeal });
     element.addEventListener('click', () => discardHuman(index));
     handEl.appendChild(element);
   });
 }
 
-function renderRivers() {
+function renderRivers(animatedPlayer = null) {
   const host = $('#rivers');
-  host.innerHTML = '';
+  const existingSeats = [...host.querySelectorAll('.seat-river')];
+  const needsReset = existingSeats.length !== state.playerCount || existingSeats.some((seat, player) =>
+    Number(seat.dataset.player) !== player || seat.children.length > state.rivers[player].length
+  );
+  if (needsReset) {
+    host.innerHTML = '';
+    for (let player = 0; player < state.playerCount; player++) {
+      const seat = document.createElement('div');
+      seat.className = `seat-river river-${positionFor(player)}`;
+      seat.dataset.player = String(player);
+      host.appendChild(seat);
+    }
+  }
   state.rivers.forEach((river, player) => {
-    const seat = document.createElement('div');
-    seat.className = `seat-river river-${positionFor(player)}`;
-    seat.dataset.player = String(player);
-    river.forEach((tile, index) => {
+    const seat = host.querySelector(`[data-player="${player}"]`);
+    [...seat.children].forEach(element => element.classList.remove('latest-discard'));
+    for (let index = seat.children.length; index < river.length; index++) {
+      const tile = river[index];
       const element = tileElement(tile, { button: false, compact: true });
       if (index === river.length - 1) element.classList.add('latest-discard');
+      if (player === animatedPlayer && index === river.length - 1) element.classList.add('discard-enter');
       seat.appendChild(element);
-    });
-    host.appendChild(seat);
+    }
+    if (seat.lastElementChild) seat.lastElementChild.classList.add('latest-discard');
   });
 }
 
@@ -524,5 +537,5 @@ function renderStatus() {
 function renderAll() {
   $('#doraIndicator').innerHTML = '';
   $('#doraIndicator').appendChild(tileElement(state.dora, { button: false, compact: true }));
-  renderHand(); renderRivers(); renderStatus(); updateWall(); updateCoach();
+  renderHand(true); renderRivers(); renderStatus(); updateWall(); updateCoach();
 }

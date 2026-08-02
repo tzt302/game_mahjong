@@ -98,7 +98,7 @@ button { font: inherit; }
 .player-status .riichi-badge { color: #fff; background: var(--red); padding: 2px 6px; border-radius: 2px; margin-left: 5px; }
 .message-bar { text-align: center; color: var(--muted); font-size: 11px; min-height: 22px; }
 .hand { min-height: 70px; display: flex; justify-content: center; align-items: flex-end; gap: 3px; padding-top: 5px; overflow-x: auto; perspective: 700px; transform-style: preserve-3d; }
-.tile { width: clamp(36px, 4.1vw, 50px); height: clamp(52px, 5.8vw, 69px); border: 1px solid #c7c5b7; border-radius: 5px; position: relative; display: grid; place-items: center; color: #17231e; background: linear-gradient(135deg, #fffef5 0 70%, #ddd9c8 100%); box-shadow: 0 5px 0 #bd8d3e, 0 8px 0 #71471f, 0 11px 13px rgba(0,0,0,.3); font-family: "Noto Serif SC", SimSun, serif; font-weight: 800; font-size: clamp(14px, 1.6vw, 20px); cursor: pointer; transition: transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .16s ease, filter .16s ease; flex: 0 0 auto; animation: tile-arrive .24s cubic-bezier(.2,.75,.2,1) both; }
+.tile { width: clamp(36px, 4.1vw, 50px); height: clamp(52px, 5.8vw, 69px); border: 1px solid #c7c5b7; border-radius: 5px; position: relative; display: grid; place-items: center; color: #17231e; background: linear-gradient(135deg, #fffef5 0 70%, #ddd9c8 100%); box-shadow: 0 5px 0 #bd8d3e, 0 8px 0 #71471f, 0 11px 13px rgba(0,0,0,.3); font-family: "Noto Serif SC", SimSun, serif; font-weight: 800; font-size: clamp(14px, 1.6vw, 20px); cursor: pointer; transition: transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .16s ease, filter .16s ease; flex: 0 0 auto; }
 .tile:hover { transform: translateY(-12px) rotateX(-4deg); filter: brightness(1.05); box-shadow: 0 5px 0 #d0a654, 0 8px 0 #71471f, 0 17px 18px rgba(0,0,0,.34); }
 .tile.suit-m { color: #b84135; }
 .tile.suit-p { color: #28628a; }
@@ -107,12 +107,12 @@ button { font: inherit; }
 .tile.red { color: #d9473d; }
 .tile.recommended::after { content: "AI"; position: absolute; top: -9px; right: -5px; font: 700 7px sans-serif; color: #172019; background: var(--gold-soft); padding: 2px 3px; border-radius: 3px; }
 .tile.drawn { margin-left: 8px; }
+.tile.tile-arrive { animation: tile-arrive .24s cubic-bezier(.2,.75,.2,1) both; }
 .hand .tile.drawn { animation: draw-in .34s cubic-bezier(.18,.8,.2,1) both; }
-.river .tile:last-child { animation: discard-in .28s cubic-bezier(.2,.8,.2,1) both; }
 .hand-lock .tile { pointer-events: none; }
 @keyframes tile-arrive { from { opacity: 0; transform: translateY(-8px) scale(.94); } to { opacity: 1; transform: none; } }
 @keyframes draw-in { from { opacity: 0; transform: translate(70px,-70px) rotate(8deg) scale(.75); } to { opacity: 1; transform: none; } }
-@keyframes discard-in { from { opacity: 0; transform: translateY(80px) scale(1.25); } to { opacity: 1; transform: none; } }
+@keyframes discard-in { from { opacity: .68; transform: translateY(18px) scale(1.05); } to { opacity: 1; transform: none; } }
 .action-row { display: flex; justify-content: center; gap: 8px; min-height: 27px; margin-top: 4px; }
 .action-button { padding: 8px 20px; color: var(--gold-soft); border: 1px solid rgba(211,170,85,.45); border-radius: 6px; background: rgba(211,170,85,.08); cursor: pointer; }
 .action-button.win { color: #11251e; background: var(--gold-soft); font-weight: 800; }
@@ -234,7 +234,8 @@ button { font: inherit; }
 .river-top { left: 50%; top: 115px; transform: translateX(-50%) rotate(180deg) perspective(500px) rotateX(10deg); }
 .river-left { left: 118px; top: 47%; transform: translateY(-50%) rotate(90deg) perspective(500px) rotateX(10deg); }
 .river-right { right: 118px; top: 47%; transform: translateY(-50%) rotate(-90deg) perspective(500px) rotateX(10deg); }
-.seat-river .latest-discard { box-shadow: 0 3px 0 #b68439, 0 0 0 2px var(--gold-soft), 0 0 13px rgba(241,214,149,.7); animation: discard-in .28s cubic-bezier(.2,.8,.2,1) both; }
+.seat-river .latest-discard { box-shadow: 0 3px 0 #b68439, 0 0 0 2px var(--gold-soft), 0 0 13px rgba(241,214,149,.7); }
+.seat-river .discard-enter { animation: discard-in .22s cubic-bezier(.2,.75,.25,1) both; }
 .yaku-list { margin: 18px 0 6px; max-height: 210px; overflow-y: auto; border-top: 1px solid var(--line); }
 .yaku-list > div { display: flex; justify-content: space-between; padding: 9px 4px; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 12px; }
 .yaku-list b { color: var(--gold-soft); }
