@@ -1,0 +1,11 @@
+{
+  "name": "game_mahjong",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes serve .",
+    "test": "node --test"
+  },
+  "description": "单机日麻与 AI 牌效教练小游戏"
+}
