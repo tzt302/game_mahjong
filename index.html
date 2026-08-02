@@ -53,7 +53,7 @@
           </button>
         </div>
         <button id="startButton" class="primary-button">进入牌桌 <span>→</span></button>
-        <p class="scope-note">门清对局 · 完整符番点数 · 役满判定</p>
+        <p class="scope-note">吃碰杠对局 · 完整符番点数 · 役满判定</p>
       </div>
     </section>
 
@@ -62,6 +62,7 @@
         <div class="table" id="table">
           <div id="tileWalls" class="tile-walls" aria-hidden="true"></div>
           <div id="opponents" class="opponents"></div>
+          <div id="meldsLayer" class="melds-layer" aria-label="四家副露"></div>
           <div class="table-center">
             <div class="dora-panel"><span>宝牌表示</span><div id="doraIndicator" class="mini-tile"></div></div>
             <div class="center-mark"><b id="centerRound">東一</b><span id="centerWall">70</span></div>
@@ -93,10 +94,13 @@
         </div>
         <div id="messageBar" class="message-bar">请选择一张牌打出</div>
         <div id="hand" class="hand" aria-label="你的手牌"></div>
+        <div id="callChoices" class="call-choices hidden" aria-label="鸣牌选择"></div>
         <div class="action-row">
           <button id="riichiButton" class="action-button hidden">立直</button>
           <button id="winButton" class="action-button win hidden">自摸</button>
           <button id="ronButton" class="action-button win hidden">荣和</button>
+          <button id="ponButton" class="action-button call hidden">碰</button>
+          <button id="kanButton" class="action-button call hidden">杠</button>
           <button id="skipButton" class="action-button hidden">跳过</button>
         </div>
       </div>
@@ -111,8 +115,11 @@
         <div class="win-heading">
           <span id="winnerSeat" class="winner-seat">东家</span>
           <div><h2 id="resultTitle">玩家 自摸</h2><p id="winSource">门前清自摸和</p></div>
+          <strong id="resultPointHero" class="result-point-hero">8,000点</strong>
         </div>
         <div id="settlementHand" class="settlement-hand" aria-label="和牌牌型"></div>
+        <div id="settlementMelds" class="settlement-melds hidden" aria-label="副露牌型"></div>
+        <div id="resultReason" class="result-reason"></div>
         <div id="humanPaymentNotice" class="human-payment-notice"></div>
         <p id="resultText"></p>
         <div id="yakuList" class="yaku-list"></div>

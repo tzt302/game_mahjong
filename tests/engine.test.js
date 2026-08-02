@@ -76,3 +76,29 @@ test('supports red and north dora counters without treating dora alone as yaku',
   assert.ok(result.yaku.some(item => item.name === '赤宝牌' && item.han === 1));
   assert.ok(result.yaku.some(item => item.name === '北宝牌' && item.han === 2));
 });
+
+test('calculates shanten with an exposed meld already fixed', () => {
+  const concealed = [0,1,2, 9,10,11, 18,19, 27,27];
+  assert.equal(shanten(concealed, 1), 0);
+});
+
+test('scores an open tanyao hand without menzen tsumo', () => {
+  const concealed = [4,5,6, 10,11,12, 19,20,21, 22,22];
+  const result = evaluateHand(concealed, {
+    winTile: 21,
+    tsumo: true,
+    openMelds: [{ type: 'sequence', tile: 1, open: true }]
+  });
+  assert.ok(result.yaku.some(item => item.name === '断幺九'));
+  assert.equal(result.yaku.some(item => item.name === '门前清自摸和'), false);
+});
+
+test('reduces ikkitsuukan to one han when the hand is open', () => {
+  const concealed = [3,4,5, 6,7,8, 9,10,11, 22,22];
+  const result = evaluateHand(concealed, {
+    winTile: 11,
+    openMelds: [{ type: 'sequence', tile: 0, open: true }]
+  });
+  assert.ok(result.yaku.some(item => item.name === '一气通贯' && item.han === 1));
+  assert.equal(result.yaku.some(item => item.name === '平和'), false);
+});

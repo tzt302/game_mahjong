@@ -21,7 +21,7 @@ function waitFu(decomp, winTile) {
   if (decomp.pair === winTile) return 2;
   const waits = [];
   decomp.melds.forEach(meld => {
-    if (meld.type !== 'sequence' || winTile < meld.tile || winTile > meld.tile + 2) return;
+    if (meld.type !== 'sequence' || meld.open || winTile < meld.tile || winTile > meld.tile + 2) return;
     const offset = winTile - meld.tile;
     if (offset === 1 || (meld.tile % 9 === 0 && offset === 2) || (meld.tile % 9 === 6 && offset === 0)) waits.push(2);
     else waits.push(0);
@@ -36,6 +36,11 @@ function isValuePair(pair, context) {
 function suitProfile(hand) {
   const suits = new Set(hand.filter(tile => tile < 27).map(tile => Math.floor(tile / 9)));
   return { suits, honors: hand.some(isHonor) };
+}
+
+function meldTiles(meld) {
+  if (meld.type === 'sequence') return [meld.tile, meld.tile + 1, meld.tile + 2];
+  return Array(meld.type === 'kan' ? 4 : 3).fill(meld.tile);
 }
 
 function chuurenInfo(hand, winTile) {
@@ -69,11 +74,11 @@ function yakumanFor(hand, decomp, context) {
   if (hand.every(isHonor)) add('字一色');
   if (hand.every(tile => GREEN.has(tile))) add('绿一色');
   if (hand.every(isTerminal)) add('清老头');
-  if (decomp.kind === 'standard' && triplets.length === 4) {
+  if (decomp.kind === 'standard' && triplets.length === 4 && context.openMelds.length === 0) {
     const tanki = decomp.pair === context.winTile;
     if (context.tsumo || tanki) add(tanki ? '四暗刻单骑' : '四暗刻', tanki ? 2 : 1);
   }
-  const chuuren = chuurenInfo(hand, context.winTile);
+  const chuuren = context.openMelds.length ? null : chuurenInfo(hand, context.winTile);
   if (chuuren) add(chuuren.pure ? '纯正九莲宝灯' : '九莲宝灯', chuuren.pure ? 2 : 1);
   return items;
 }
@@ -82,10 +87,11 @@ function regularYaku(hand, decomp, context) {
   const counts = countsFromHand(hand);
   const yaku = [];
   const add = (name, han) => yaku.push({ name, han });
-  if (context.doubleRiichi) add('两立直', 2);
-  else if (context.riichi) add('立直', 1);
+  const menzen = context.openMelds.length === 0;
+  if (context.doubleRiichi && menzen) add('两立直', 2);
+  else if (context.riichi && menzen) add('立直', 1);
   if (context.ippatsu && context.riichi) add('一发', 1);
-  if (context.tsumo) add('门前清自摸和', 1);
+  if (context.tsumo && menzen) add('门前清自摸和', 1);
   if (context.haitei) add('海底摸月', 1);
   if (context.houtei) add('河底捞鱼', 1);
   if (context.chankan) add('抢杠', 1);
@@ -94,7 +100,7 @@ function regularYaku(hand, decomp, context) {
   if (hand.every(tile => !isYaochu(tile))) add('断幺九', 1);
 
   const profile = suitProfile(hand);
-  if (profile.suits.size === 1) add(profile.honors ? '混一色' : '清一色', profile.honors ? 3 : 6);
+  if (profile.suits.size === 1) add(profile.honors ? '混一色' : '清一色', profile.honors ? (menzen ? 3 : 2) : (menzen ? 6 : 5));
 
   if (decomp.kind === 'chiitoi') {
     add('七对子', 2);
@@ -110,27 +116,27 @@ function regularYaku(hand, decomp, context) {
   if (triplets.includes(context.roundWind)) add('役牌：场风', 1);
 
   const pinfu = sequences.length === 4 && !isValuePair(decomp.pair, context) && waitFu(decomp, context.winTile) === 0;
-  if (pinfu) add('平和', 1);
+  if (pinfu && menzen) add('平和', 1);
 
   const keys = sequenceKeys(decomp.melds);
   const frequencies = new Map();
   keys.forEach(key => frequencies.set(key, (frequencies.get(key) || 0) + 1));
   const duplicatePairs = [...frequencies.values()].filter(value => value >= 2).length;
-  if (duplicatePairs >= 2) add('二杯口', 3);
-  else if (duplicatePairs === 1) add('一杯口', 1);
+  if (menzen && duplicatePairs >= 2) add('二杯口', 3);
+  else if (menzen && duplicatePairs === 1) add('一杯口', 1);
 
   for (let rank = 0; rank <= 6; rank++) {
-    if ([0,1,2].every(suit => keys.includes(`${suit}-${rank}`))) { add('三色同顺', 2); break; }
+    if ([0,1,2].every(suit => keys.includes(`${suit}-${rank}`))) { add('三色同顺', menzen ? 2 : 1); break; }
   }
   for (let suit = 0; suit < 3; suit++) {
-    if ([0,3,6].every(rank => keys.includes(`${suit}-${rank}`))) { add('一气通贯', 2); break; }
+    if ([0,3,6].every(rank => keys.includes(`${suit}-${rank}`))) { add('一气通贯', menzen ? 2 : 1); break; }
   }
   for (let rank = 0; rank < 9; rank++) {
     if ([0,1,2].every(suit => triplets.includes(suit * 9 + rank))) { add('三色同刻', 2); break; }
   }
   if (triplets.length === 4) add('对对和', 2);
 
-  let concealedTrips = triplets.length;
+  let concealedTrips = triplets.length - context.openMelds.filter(meld => meld.type !== 'sequence').length;
   if (!context.tsumo && triplets.includes(context.winTile) && decomp.pair !== context.winTile) concealedTrips--;
   if (concealedTrips >= 3) add('三暗刻', 2);
 
@@ -141,8 +147,8 @@ function regularYaku(hand, decomp, context) {
   const groups = [...decomp.melds.map(m => m.type === 'triplet' ? [m.tile] : [m.tile,m.tile+1,m.tile+2]), [decomp.pair]];
   const everyHasYaochu = groups.every(group => group.some(isYaochu));
   if (everyHasYaochu && sequences.length) {
-    if (hand.some(isHonor)) add('混全带幺九', 2);
-    else add('纯全带幺九', 3);
+    if (hand.some(isHonor)) add('混全带幺九', menzen ? 2 : 1);
+    else add('纯全带幺九', menzen ? 3 : 2);
   }
   return yaku;
 }
@@ -154,18 +160,20 @@ function calculateFu(decomp, context, yaku) {
   if (pinfu && context.tsumo) return 20;
   let fu = 20;
   if (context.tsumo) fu += 2;
-  else fu += 10;
+  else if (context.openMelds.length === 0) fu += 10;
   if (DRAGONS.includes(decomp.pair)) fu += 2;
   if (decomp.pair === context.seatWind) fu += 2;
   if (decomp.pair === context.roundWind) fu += 2;
   let ronTripletConsumed = false;
-  decomp.melds.filter(m => m.type === 'triplet').forEach(meld => {
+  decomp.melds.filter(m => m.type === 'triplet' || m.type === 'kan').forEach(meld => {
     const terminal = isYaochu(meld.tile);
-    const openedByRon = !context.tsumo && !ronTripletConsumed && meld.tile === context.winTile && decomp.pair !== context.winTile;
+    const openedByRon = !meld.open && !context.tsumo && !ronTripletConsumed && meld.tile === context.winTile && decomp.pair !== context.winTile;
     if (openedByRon) ronTripletConsumed = true;
-    fu += openedByRon ? (terminal ? 4 : 2) : (terminal ? 8 : 4);
+    if (meld.type === 'kan') fu += meld.open ? (terminal ? 16 : 8) : (terminal ? 32 : 16);
+    else fu += (meld.open || openedByRon) ? (terminal ? 4 : 2) : (terminal ? 8 : 4);
   });
   fu += waitFu(decomp, context.winTile);
+  if (fu === 20) fu = 30;
   return Math.ceil(fu / 10) * 10;
 }
 
@@ -195,12 +203,14 @@ function pointsFrom(fu, han, yakuman, dealer, tsumo, playerCount) {
 }
 
 export function evaluateHand(hand, options = {}) {
+  const openMelds = (options.openMelds || []).map(meld => ({ ...meld, open: meld.open !== false }));
+  const fullHand = [...hand, ...openMelds.flatMap(meldTiles)];
   const context = {
     winTile: options.winTile ?? hand[hand.length - 1], tsumo: Boolean(options.tsumo),
     riichi: Boolean(options.riichi), doubleRiichi: Boolean(options.doubleRiichi), ippatsu: Boolean(options.ippatsu),
     dealer: Boolean(options.dealer), seatWind: options.seatWind ?? 27, roundWind: options.roundWind ?? 27,
     firstTurn: Boolean(options.firstTurn), haitei: Boolean(options.haitei), houtei: Boolean(options.houtei),
-    playerCount: options.playerCount ?? 4
+    playerCount: options.playerCount ?? 4, openMelds
   };
   context.chankan = Boolean(options.chankan);
   context.rinshan = Boolean(options.rinshan);
@@ -209,18 +219,19 @@ export function evaluateHand(hand, options = {}) {
   if (!decompositions.length) return null;
   let best = null;
   decompositions.forEach(decomp => {
-    const yakuman = yakumanFor(hand, decomp, context);
+    const scoredDecomp = decomp.kind === 'standard' ? { ...decomp, melds: [...decomp.melds, ...openMelds] } : decomp;
+    const yakuman = yakumanFor(fullHand, scoredDecomp, context);
     const yakumanCount = yakuman.reduce((sum, item) => sum + item.yakuman, 0);
-    let yaku = yakumanCount ? [] : regularYaku(hand, decomp, context);
+    let yaku = yakumanCount ? [] : regularYaku(fullHand, scoredDecomp, context);
     if (!yakumanCount && !yaku.length) return;
-    const dora = (options.doraIndicators || []).reduce((sum, indicator) => sum + hand.filter(tile => tile === nextDora(indicator)).length, 0);
+    const dora = (options.doraIndicators || []).reduce((sum, indicator) => sum + fullHand.filter(tile => tile === nextDora(indicator)).length, 0);
     if (!yakumanCount && dora) yaku = [...yaku, { name: '宝牌', han: dora }];
     if (!yakumanCount && options.redDora) yaku = [...yaku, { name: '赤宝牌', han: options.redDora }];
     if (!yakumanCount && options.northDora) yaku = [...yaku, { name: '北宝牌', han: options.northDora }];
     const han = yaku.reduce((sum, item) => sum + item.han, 0);
-    const fu = yakumanCount ? 0 : calculateFu(decomp, context, yaku);
+    const fu = yakumanCount ? 0 : calculateFu(scoredDecomp, context, yaku);
     const points = pointsFrom(fu, han, yakumanCount, context.dealer, context.tsumo, context.playerCount);
-    const candidate = { yaku: yakumanCount ? yakuman : yaku, han, fu, yakuman: yakumanCount, ...points, decomp };
+    const candidate = { yaku: yakumanCount ? yakuman : yaku, han, fu, yakuman: yakumanCount, ...points, decomp: scoredDecomp };
     if (!best || candidate.total > best.total) best = candidate;
   });
   return best;

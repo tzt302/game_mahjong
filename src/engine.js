@@ -63,18 +63,19 @@ function collectMelds(counts, melds, output) {
 }
 
 export function getWinningDecompositions(hand) {
-  if (hand.length !== 14) return [];
+  if (hand.length % 3 !== 2 || hand.length < 2 || hand.length > 14) return [];
   const counts = countsFromHand(hand);
   const output = [];
-  if (counts.filter(value => value === 2).length === 7) output.push({ kind: 'chiitoi', pair: null, melds: [] });
-  if (isKokushi(hand)) output.push({ kind: 'kokushi', pair: null, melds: [] });
+  if (hand.length === 14 && counts.filter(value => value === 2).length === 7) output.push({ kind: 'chiitoi', pair: null, melds: [] });
+  if (hand.length === 14 && isKokushi(hand)) output.push({ kind: 'kokushi', pair: null, melds: [] });
+  const meldsNeeded = (hand.length - 2) / 3;
   for (let pair = 0; pair < 34; pair += 1) {
     if (counts[pair] < 2) continue;
     const remaining = [...counts];
     remaining[pair] -= 2;
     const meldSets = [];
     collectMelds(remaining, [], meldSets);
-    meldSets.filter(melds => melds.length === 4).forEach(melds => output.push({ kind: 'standard', pair, melds }));
+    meldSets.filter(melds => melds.length === meldsNeeded).forEach(melds => output.push({ kind: 'standard', pair, melds }));
   }
   return output;
 }
@@ -150,9 +151,10 @@ function normalShanten(counts, index = 0, melds = 0, pairs = 0, taatsu = 0) {
   return best;
 }
 
-export function shanten(hand) {
+export function shanten(hand, fixedMelds = 0) {
   const counts = countsFromHand(hand);
-  const standard = normalShanten([...counts]);
+  const standard = normalShanten([...counts], 0, fixedMelds);
+  if (fixedMelds > 0) return standard;
   const pairKinds = counts.filter(value => value >= 2).length;
   const uniqueKinds = counts.filter(value => value > 0).length;
   const sevenPairs = 6 - pairKinds + Math.max(0, 7 - uniqueKinds);
@@ -162,19 +164,19 @@ export function shanten(hand) {
   return Math.min(standard, sevenPairs, kokushi);
 }
 
-export function analyzeDiscards(hand, visibleTiles = [], playerCount = 4) {
+export function analyzeDiscards(hand, visibleTiles = [], playerCount = 4, fixedMelds = 0) {
   const visible = countsFromHand(visibleTiles);
   const allowed = createWall(playerCount).filter((tile, index, arr) => index === 0 || arr[index - 1] !== tile);
   return [...new Set(hand)].map(discard => {
     const reduced = [...hand];
     reduced.splice(reduced.indexOf(discard), 1);
-    const currentShanten = shanten(reduced);
+    const currentShanten = shanten(reduced, fixedMelds);
     const effective = [];
     let ukeire = 0;
     for (const draw of allowed) {
       const remaining = 4 - reduced.filter(tile => tile === draw).length - visible[draw];
       if (remaining <= 0) continue;
-      if (shanten([...reduced, draw]) < currentShanten) {
+      if (shanten([...reduced, draw], fixedMelds) < currentShanten) {
         effective.push(draw);
         ukeire += remaining;
       }
