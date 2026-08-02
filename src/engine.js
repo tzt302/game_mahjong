@@ -36,6 +36,49 @@ export function countsFromHand(hand) {
   return counts;
 }
 
+export const ORPHANS = [0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32, 33];
+
+export function isKokushi(hand) {
+  if (hand.length !== 14) return false;
+  const counts = countsFromHand(hand);
+  return ORPHANS.every(tile => counts[tile] >= 1) && ORPHANS.some(tile => counts[tile] >= 2);
+}
+
+function collectMelds(counts, melds, output) {
+  const first = counts.findIndex(value => value > 0);
+  if (first < 0) {
+    output.push(melds.map(meld => ({ ...meld })));
+    return;
+  }
+  if (counts[first] >= 3) {
+    counts[first] -= 3;
+    collectMelds(counts, [...melds, { type: 'triplet', tile: first }], output);
+    counts[first] += 3;
+  }
+  if (first < 27 && first % 9 <= 6 && counts[first + 1] && counts[first + 2]) {
+    counts[first]--; counts[first + 1]--; counts[first + 2]--;
+    collectMelds(counts, [...melds, { type: 'sequence', tile: first }], output);
+    counts[first]++; counts[first + 1]++; counts[first + 2]++;
+  }
+}
+
+export function getWinningDecompositions(hand) {
+  if (hand.length !== 14) return [];
+  const counts = countsFromHand(hand);
+  const output = [];
+  if (counts.filter(value => value === 2).length === 7) output.push({ kind: 'chiitoi', pair: null, melds: [] });
+  if (isKokushi(hand)) output.push({ kind: 'kokushi', pair: null, melds: [] });
+  for (let pair = 0; pair < 34; pair += 1) {
+    if (counts[pair] < 2) continue;
+    const remaining = [...counts];
+    remaining[pair] -= 2;
+    const meldSets = [];
+    collectMelds(remaining, [], meldSets);
+    meldSets.filter(melds => melds.length === 4).forEach(melds => output.push({ kind: 'standard', pair, melds }));
+  }
+  return output;
+}
+
 function canFormMelds(counts, meldsNeeded) {
   if (meldsNeeded === 0) return counts.every(value => value === 0);
   const first = counts.findIndex(value => value > 0);
@@ -55,6 +98,7 @@ function canFormMelds(counts, meldsNeeded) {
 
 export function isWinningHand(hand) {
   if (hand.length % 3 !== 2) return false;
+  if (isKokushi(hand)) return true;
   const counts = countsFromHand(hand);
   const pairs = counts.filter(value => value === 2).length;
   if (hand.length === 14 && pairs === 7) return true;
@@ -112,7 +156,10 @@ export function shanten(hand) {
   const pairKinds = counts.filter(value => value >= 2).length;
   const uniqueKinds = counts.filter(value => value > 0).length;
   const sevenPairs = 6 - pairKinds + Math.max(0, 7 - uniqueKinds);
-  return Math.min(standard, sevenPairs);
+  const orphanKinds = ORPHANS.filter(tile => counts[tile] > 0).length;
+  const orphanPair = ORPHANS.some(tile => counts[tile] >= 2) ? 1 : 0;
+  const kokushi = 13 - orphanKinds - orphanPair;
+  return Math.min(standard, sevenPairs, kokushi);
 }
 
 export function analyzeDiscards(hand, visibleTiles = [], playerCount = 4) {

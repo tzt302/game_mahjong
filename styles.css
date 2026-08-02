@@ -150,3 +150,47 @@ button { font: inherit; }
   .hand { gap: 1px; justify-content: flex-start; }
   .tile { width: 31px; height: 46px; font-size: 13px; }
 }
+
+/* Standard tile artwork and four-seat rivers */
+.match-select { grid-template-columns: repeat(3, 1fr); }
+.tile { padding: 3px; line-height: 1; overflow: visible; }
+.tile-svg { display: block; width: 94%; height: 94%; }
+.man-face { height: 92%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #252b29; font-family: "Noto Serif SC", SimSun, serif; }
+.man-face b { font-size: 1.18em; font-weight: 800; }
+.man-face i { color: #b73d35; font-size: .72em; font-style: normal; font-weight: 900; margin-top: 2px; }
+.honor-face { font-family: "Noto Serif SC", SimSun, serif; font-size: 1.45em; font-weight: 900; color: #202725; }
+.honor-face.green-honor { color: #247451; }
+.honor-face.red-honor { color: #bd3d35; }
+.honor-face.white-honor { width: 58%; height: 68%; font-size: 0; border: 3px double #47738b; border-radius: 2px; }
+.tile.compact { width: 27px; height: 38px; padding: 2px; border-radius: 3px; box-shadow: 0 3px 0 #b68439, 0 5px 0 #69431f, 0 6px 8px rgba(0,0,0,.3); font-size: 11px; }
+.tile.compact:hover { transform: none; filter: none; }
+.tile.compact .honor-face { font-size: 17px; }
+.tile.compact .man-face b { font-size: 13px; }
+.tile.compact .man-face i { font-size: 8px; }
+.rivers { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.seat-river { position: absolute; display: grid; grid-template-columns: repeat(6, 27px); grid-auto-rows: 38px; gap: 2px; transform-style: preserve-3d; }
+.river-bottom { left: 50%; bottom: 58px; transform: translateX(-50%) perspective(500px) rotateX(12deg); }
+.river-top { left: 50%; top: 115px; transform: translateX(-50%) rotate(180deg) perspective(500px) rotateX(10deg); }
+.river-left { left: 118px; top: 47%; transform: translateY(-50%) rotate(90deg) perspective(500px) rotateX(10deg); }
+.river-right { right: 118px; top: 47%; transform: translateY(-50%) rotate(-90deg) perspective(500px) rotateX(10deg); }
+.seat-river .latest-discard { box-shadow: 0 3px 0 #b68439, 0 0 0 2px var(--gold-soft), 0 0 13px rgba(241,214,149,.7); animation: discard-in .28s cubic-bezier(.2,.8,.2,1) both; }
+.yaku-list { margin: 18px 0 6px; max-height: 210px; overflow-y: auto; border-top: 1px solid var(--line); }
+.yaku-list > div { display: flex; justify-content: space-between; padding: 9px 4px; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 12px; }
+.yaku-list b { color: var(--gold-soft); }
+.modal-card { max-height: 90vh; overflow-y: auto; }
+.result-stats { flex-wrap: wrap; }
+
+@media (max-width: 850px) {
+  .river-left { left: 76px; }
+  .river-right { right: 76px; }
+  .river-top { top: 105px; }
+}
+
+@media (max-width: 560px) {
+  .tile.compact { width: 21px; height: 30px; }
+  .seat-river { grid-template-columns: repeat(6, 21px); grid-auto-rows: 30px; gap: 1px; }
+  .river-left { left: 45px; }
+  .river-right { right: 45px; }
+  .river-bottom { bottom: 48px; }
+  .river-top { top: 96px; }
+}

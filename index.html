@@ -37,6 +37,12 @@
           <button class="active" data-value="4">四人麻将</button>
           <button data-value="3">三人麻将</button>
         </div>
+        <label>局数</label>
+        <div class="segmented match-select" data-group="match">
+          <button data-value="single">一局战</button>
+          <button class="active" data-value="east">东风战</button>
+          <button data-value="hanchan">半庄战</button>
+        </div>
         <label>模式</label>
         <div class="mode-grid" data-group="mode">
           <button class="mode-card active" data-value="coach">
@@ -47,7 +53,7 @@
           </button>
         </div>
         <button id="startButton" class="primary-button">进入牌桌 <span>→</span></button>
-        <p class="scope-note">MVP 版本：门清摸切、立直、七对子与简化点数</p>
+        <p class="scope-note">门清对局 · 完整符番点数 · 役满判定</p>
       </div>
     </section>
 
@@ -60,7 +66,7 @@
             <div class="dora-panel"><span>宝牌表示</span><div id="doraIndicator" class="mini-tile"></div></div>
             <div class="center-mark"><b id="centerRound">東一</b><span id="centerWall">70</span></div>
           </div>
-          <div id="river" class="river"></div>
+          <div id="rivers" class="rivers" aria-label="四家牌河"></div>
         </div>
       </div>
 
@@ -98,6 +104,7 @@
       <p id="resultEyebrow" class="eyebrow">ROUND RESULT</p>
       <h2 id="resultTitle">和了</h2>
       <p id="resultText"></p>
+      <div id="yakuList" class="yaku-list"></div>
       <div id="resultStats" class="result-stats"></div>
       <button id="nextRoundButton" class="primary-button">再来一局 <span>→</span></button>
     </div>
