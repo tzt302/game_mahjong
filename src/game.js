@@ -7,7 +7,8 @@ const state = {
   dealer: 0, wall: [], hands: [], rivers: [], dora: 0, scores: [],
   riichi: [], doubleRiichi: [], riichiAt: [], riichiSticks: 0, totalDiscards: 0,
   turn: 0, waitingForDiscard: false, pendingRonTile: null, pendingRonFrom: null,
-  lastDraw: [], lastDrawnIndex: -1, over: false, matchEnded: false
+  lastDraw: [], lastDrawnIndex: -1, over: false, matchEnded: false,
+  resultPhase: 'settlement', roundSummary: null
 };
 
 const $ = selector => document.querySelector(selector);
@@ -46,6 +47,10 @@ $('#settingsButton').addEventListener('click', () => {
 });
 
 $('#nextRoundButton').addEventListener('click', () => {
+  if (state.resultPhase === 'settlement') {
+    showScoreComparison();
+    return;
+  }
   $('#resultModal').classList.add('hidden');
   if (state.matchEnded) showStartScreen();
   else newRound();
@@ -107,6 +112,7 @@ function newRound() {
   state.lastDraw = Array(state.playerCount).fill(null);
   state.totalDiscards = 0;
   state.over = false; state.waitingForDiscard = false;
+  state.resultPhase = 'settlement'; state.roundSummary = null;
   state.pendingRonTile = null; state.pendingRonFrom = null;
   hideCallButtons();
   for (let r = 0; r < 13; r++) {
@@ -116,6 +122,7 @@ function newRound() {
   state.hands.forEach(sortHand);
   $('#riichiBadge').classList.add('hidden');
   $('#resultModal').classList.add('hidden');
+  $('#tableCallout').classList.add('hidden');
   renderAll();
   setMessage(`${roundName()}，${playerName(state.dealer)}坐庄`);
   setTimeout(() => takeTurn(state.dealer), 450);
@@ -251,14 +258,17 @@ function hideCallButtons() {
 }
 
 function applyScore(winner, method, loser, result) {
+  const transfers = [];
   if (method === '荣和') {
     state.scores[loser] -= result.ron;
     state.scores[winner] += result.ron;
+    transfers.push({ from: loser, to: winner, amount: result.ron, label: '放铳支付' });
   } else if (result.payments.each) {
     for (let p = 0; p < state.playerCount; p++) {
       if (p === winner) continue;
       state.scores[p] -= result.payments.each;
       state.scores[winner] += result.payments.each;
+      transfers.push({ from: p, to: winner, amount: result.payments.each, label: '自摸支付' });
     }
   } else {
     for (let p = 0; p < state.playerCount; p++) {
@@ -266,12 +276,16 @@ function applyScore(winner, method, loser, result) {
       const payment = p === state.dealer ? result.payments.dealer : result.payments.child;
       state.scores[p] -= payment;
       state.scores[winner] += payment;
+      transfers.push({ from: p, to: winner, amount: payment, label: '自摸支付' });
     }
   }
   if (state.riichiSticks) {
-    state.scores[winner] += state.riichiSticks * 1000;
+    const stickPoints = state.riichiSticks * 1000;
+    state.scores[winner] += stickPoints;
+    transfers.push({ from: null, to: winner, amount: stickPoints, label: '场上立直棒' });
     state.riichiSticks = 0;
   }
+  return transfers;
 }
 
 function finishRound(winner, method, winTile, loser, suppliedResult = null) {
@@ -291,12 +305,17 @@ function finishRound(winner, method, winTile, loser, suppliedResult = null) {
       suppliedResult = { yaku: [{ name: '流局满贯', han: 5 }], han: 5, fu: 0, yakuman: 0, total, payments, ron: null, limitName: '满贯' };
     }
   }
+  const scoresBefore = [...state.scores];
   const result = winner === null ? null : suppliedResult || scoreFor(winner, method, winTile);
-  if (winner !== null && result) applyScore(winner, method, loser, result);
+  const transfers = winner !== null && result ? applyScore(winner, method, loser, result) : [];
+  const scoresAfter = [...state.scores];
   renderStatus();
 
   $('#resultEyebrow').textContent = method === '流局' ? 'EXHAUSTIVE DRAW' : roundName();
   $('#resultTitle').textContent = method === '流局' ? '荒牌流局' : winner === 0 ? method : `${playerName(winner)} ${method}`;
+  $('#winnerSeat').textContent = winner === null ? '流局' : `${WIND_LABELS[seatWind(winner) - 27]}家`;
+  $('#winSource').textContent = method === '荣和' ? `${playerName(loser)} 放铳` : method === '自摸' ? '自摸和牌' : method;
+  renderSettlementHand(winner, method, winTile);
   const yakuList = $('#yakuList');
   if (result) {
     yakuList.innerHTML = result.yaku.map(item => `<div><span>${item.name}</span><b>${item.yakuman ? `${item.yakuman}倍役满` : `${item.han}番`}</b></div>`).join('');
@@ -304,20 +323,103 @@ function finishRound(winner, method, winTile, loser, suppliedResult = null) {
     $('#resultText').textContent = scoreLabel;
     const paymentText = method === '荣和' ? `${result.ron.toLocaleString()}点` : result.payments.each ? `${result.payments.each.toLocaleString()}点 ALL` : `庄家 ${result.payments.dealer.toLocaleString()} / 闲家 ${result.payments.child.toLocaleString()}`;
     $('#resultStats').innerHTML = `<div>符<b>${result.fu || '—'}</b></div><div>番<b>${result.yakuman ? '役满' : result.han}</b></div><div>得点<b>${paymentText}</b></div>`;
+    const humanDelta = scoresAfter[0] - scoresBefore[0];
+    const notice = $('#humanPaymentNotice');
+    notice.className = `human-payment-notice ${humanDelta > 0 ? 'gain' : humanDelta < 0 ? 'pay' : 'neutral'}`;
+    notice.textContent = humanDelta > 0 ? `你获得 ${humanDelta.toLocaleString()} 点` : humanDelta < 0 ? `你需要支付 ${Math.abs(humanDelta).toLocaleString()} 点` : '你本局没有点数变化';
   } else {
     yakuList.innerHTML = '';
     $('#resultText').textContent = '牌山已尽，本局无人和牌。';
     $('#resultStats').innerHTML = `<div>你的向听数<b>${Math.max(0, shanten(state.hands[0]))}</b></div><div>剩余牌<b>0</b></div>`;
+    $('#humanPaymentNotice').className = 'human-payment-notice neutral';
+    $('#humanPaymentNotice').textContent = '本局无人支付点数';
   }
 
   state.roundIndex += 1;
   state.matchEnded = state.roundIndex >= state.maxRounds;
-  if (state.matchEnded) {
-    const ranking = state.scores.map((score, player) => ({ player, score })).sort((a,b) => b.score - a.score);
-    $('#resultText').textContent += `　终局第一：${playerName(ranking[0].player)} ${ranking[0].score.toLocaleString()}点`;
-    $('#nextRoundButton').innerHTML = '返回模式选择 <span>→</span>';
-  } else $('#nextRoundButton').innerHTML = '下一局 <span>→</span>';
-  $('#resultModal').classList.remove('hidden');
+  state.resultPhase = 'settlement';
+  state.roundSummary = { winner, method, loser, result, scoresBefore, scoresAfter, transfers };
+  $('#resultPhase').classList.remove('hidden');
+  $('#scorePhase').classList.add('hidden');
+  $('#nextRoundButton').innerHTML = '查看分数变化 <span>→</span>';
+  showWinAnnouncement(winner, method);
+}
+
+function renderSettlementHand(winner, method, winTile) {
+  const host = $('#settlementHand');
+  host.innerHTML = '';
+  if (winner === null) {
+    host.classList.add('hidden');
+    return;
+  }
+  host.classList.remove('hidden');
+  const hand = [...state.hands[winner]];
+  if (method === '荣和' && hand.length % 3 === 1) hand.push(winTile);
+  sortHand(hand);
+  const winningIndex = hand.lastIndexOf(winTile);
+  const winning = winningIndex >= 0 ? hand.splice(winningIndex, 1)[0] : null;
+  if (winning !== null) hand.push(winning);
+  hand.forEach((tile, index) => {
+    const element = tileElement(tile, { button: false });
+    element.style.animationDelay = `${index * 26}ms`;
+    if (index === hand.length - 1) element.classList.add('winning-tile');
+    host.appendChild(element);
+  });
+}
+
+function showWinAnnouncement(winner, method) {
+  const callout = $('#tableCallout');
+  $('#tableCalloutMethod').textContent = method === '荣和' ? 'RON' : method === '自摸' ? 'TSUMO' : method === '流局' ? '流局' : '满贯';
+  $('#tableCalloutPlayer').textContent = winner === null ? '荒牌平局' : `${playerName(winner)} · ${WIND_LABELS[seatWind(winner) - 27]}家`;
+  callout.classList.remove('hidden');
+  callout.style.animation = 'none';
+  void callout.offsetWidth;
+  callout.style.animation = '';
+  setTimeout(() => {
+    callout.classList.add('hidden');
+    $('#resultModal').classList.remove('hidden');
+  }, 950);
+}
+
+function showScoreComparison() {
+  if (!state.roundSummary) return;
+  state.resultPhase = 'score';
+  $('#resultPhase').classList.add('hidden');
+  $('#scorePhase').classList.remove('hidden');
+  const { transfers, scoresBefore, scoresAfter, winner } = state.roundSummary;
+  const transferHost = $('#scoreTransfers');
+  transferHost.innerHTML = transfers.length ? transfers.map((transfer, index) => `
+    <div class="score-transfer" style="--delay:${index * 160}ms">
+      <span class="from">${transfer.from === null ? transfer.label : playerName(transfer.from)}</span>
+      <strong>−${transfer.amount.toLocaleString()} →</strong>
+      <span class="to">${playerName(transfer.to)}</span>
+    </div>`).join('') : '<div class="human-payment-notice neutral">本局没有点数移动</div>';
+
+  const ranking = scoresAfter.map((score, player) => ({ player, score, before: scoresBefore[player], delta: score - scoresBefore[player] })).sort((a,b) => b.score - a.score);
+  const maxScore = Math.max(...scoresAfter, 1);
+  $('#scoreComparison').innerHTML = ranking.map((item, index) => `
+    <div class="score-row ${item.player === winner ? 'winner' : ''}" style="--delay:${index * 100 + 220}ms">
+      <span class="score-rank">${index + 1}</span>
+      <span class="score-name">${playerName(item.player)}${item.player === 0 ? '（你）' : ''}</span>
+      <span class="score-bar"><i style="--width:${Math.max(3, item.score / maxScore * 100)}%"></i></span>
+      <span class="score-numbers"><b data-from="${item.before}" data-to="${item.score}">${item.before.toLocaleString()}</b><span class="${item.delta > 0 ? 'positive' : item.delta < 0 ? 'negative' : ''}">${item.delta > 0 ? '+' : ''}${item.delta.toLocaleString()}</span></span>
+    </div>`).join('');
+  document.querySelectorAll('.score-numbers b').forEach(element => animateScoreNumber(element));
+  $('#nextRoundButton').innerHTML = state.matchEnded ? '返回模式选择 <span>→</span>' : '下一局 <span>→</span>';
+}
+
+function animateScoreNumber(element) {
+  const from = Number(element.dataset.from);
+  const to = Number(element.dataset.to);
+  const started = performance.now();
+  const duration = 900;
+  function tick(now) {
+    const progress = Math.min(1, (now - started) / duration);
+    const eased = 1 - ((1 - progress) ** 3);
+    element.textContent = Math.round(from + (to - from) * eased).toLocaleString();
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
 }
 
 function playerName(index) { return index === 0 ? '玩家' : ['', '北川', '森', '小林'][index]; }

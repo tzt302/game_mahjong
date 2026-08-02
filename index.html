@@ -67,6 +67,10 @@
             <div class="center-mark"><b id="centerRound">東一</b><span id="centerWall">70</span></div>
           </div>
           <div id="rivers" class="rivers" aria-label="四家牌河"></div>
+          <div id="tableCallout" class="table-callout hidden" aria-live="assertive">
+            <strong id="tableCalloutMethod">荣和</strong>
+            <span id="tableCalloutPlayer">玩家</span>
+          </div>
         </div>
       </div>
 
@@ -100,13 +104,27 @@
   </main>
 
   <div id="resultModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-card">
-      <p id="resultEyebrow" class="eyebrow">ROUND RESULT</p>
-      <h2 id="resultTitle">和了</h2>
-      <p id="resultText"></p>
-      <div id="yakuList" class="yaku-list"></div>
-      <div id="resultStats" class="result-stats"></div>
-      <button id="nextRoundButton" class="primary-button">再来一局 <span>→</span></button>
+    <div class="modal-card settlement-card">
+      <div class="settlement-glow"></div>
+      <section id="resultPhase" class="settlement-phase">
+        <p id="resultEyebrow" class="eyebrow">ROUND RESULT</p>
+        <div class="win-heading">
+          <span id="winnerSeat" class="winner-seat">东家</span>
+          <div><h2 id="resultTitle">玩家 自摸</h2><p id="winSource">门前清自摸和</p></div>
+        </div>
+        <div id="settlementHand" class="settlement-hand" aria-label="和牌牌型"></div>
+        <div id="humanPaymentNotice" class="human-payment-notice"></div>
+        <p id="resultText"></p>
+        <div id="yakuList" class="yaku-list"></div>
+        <div id="resultStats" class="result-stats"></div>
+      </section>
+      <section id="scorePhase" class="settlement-phase score-phase hidden">
+        <p class="eyebrow">SCORE MOVEMENT</p>
+        <h2>点数移动</h2>
+        <div id="scoreTransfers" class="score-transfers"></div>
+        <div id="scoreComparison" class="score-comparison"></div>
+      </section>
+      <button id="nextRoundButton" class="primary-button settlement-next">查看分数变化 <span>→</span></button>
     </div>
   </div>
 
