@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#122a26">
+  <title>雀研所 · 日麻 AI 教练</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">雀</span>
+        <div><h1>雀研所</h1><p>MAHJONG LAB</p></div>
+      </div>
+      <div class="round-meta">
+        <span id="roundLabel">东一局</span>
+        <span class="honba">0 本场</span>
+        <span id="wallLabel">余 70</span>
+      </div>
+      <button id="settingsButton" class="icon-button" aria-label="重新设置">↻</button>
+    </header>
+
+    <section id="startScreen" class="start-screen">
+      <div class="hero-copy">
+        <p class="eyebrow">SINGLE PLAYER RIICHI MAHJONG</p>
+        <h2>每一次出牌，<br><em>都有迹可循。</em></h2>
+        <p class="hero-description">一款专注牌效与决策训练的单机日麻。先凭直觉落子，再听 AI 解释另一种可能。</p>
+      </div>
+      <div class="setup-card">
+        <h3>开始一局</h3>
+        <label>人数</label>
+        <div class="segmented" data-group="players">
+          <button class="active" data-value="4">四人麻将</button>
+          <button data-value="3">三人麻将</button>
+        </div>
+        <label>模式</label>
+        <div class="mode-grid" data-group="mode">
+          <button class="mode-card active" data-value="coach">
+            <span class="mode-icon">◈</span><strong>AI 教练</strong><small>实时分析候选牌与进张</small>
+          </button>
+          <button class="mode-card" data-value="normal">
+            <span class="mode-icon">○</span><strong>普通对局</strong><small>纯净界面，独立思考</small>
+          </button>
+        </div>
+        <button id="startButton" class="primary-button">进入牌桌 <span>→</span></button>
+        <p class="scope-note">MVP 版本：门清摸切、立直、七对子与简化点数</p>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="game-screen hidden">
+      <div class="table-wrap">
+        <div class="table" id="table">
+          <div id="tileWalls" class="tile-walls" aria-hidden="true"></div>
+          <div id="opponents" class="opponents"></div>
+          <div class="table-center">
+            <div class="dora-panel"><span>宝牌表示</span><div id="doraIndicator" class="mini-tile"></div></div>
+            <div class="center-mark"><b id="centerRound">東一</b><span id="centerWall">70</span></div>
+          </div>
+          <div id="river" class="river"></div>
+        </div>
+      </div>
+
+      <aside id="coachPanel" class="coach-panel">
+        <div class="coach-heading">
+          <div><span class="ai-dot"></span><small>AI COACH</small><h3>出牌建议</h3></div>
+          <button id="toggleCoach" class="ghost-button">收起</button>
+        </div>
+        <div id="coachContent" class="coach-content">
+          <p class="coach-lead">选择一张牌后，AI 会比较向听数与有效进张。</p>
+          <div id="recommendations" class="recommendations"></div>
+        </div>
+      </aside>
+
+      <div class="player-zone">
+        <div class="player-status">
+          <div class="avatar">你</div>
+          <div><strong id="playerName">玩家</strong><span id="scoreLabel">25,000 点</span></div>
+          <span id="riichiBadge" class="riichi-badge hidden">立直</span>
+        </div>
+        <div id="messageBar" class="message-bar">请选择一张牌打出</div>
+        <div id="hand" class="hand" aria-label="你的手牌"></div>
+        <div class="action-row">
+          <button id="riichiButton" class="action-button hidden">立直</button>
+          <button id="winButton" class="action-button win hidden">自摸</button>
+          <button id="ronButton" class="action-button win hidden">荣和</button>
+          <button id="skipButton" class="action-button hidden">跳过</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="resultModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <p id="resultEyebrow" class="eyebrow">ROUND RESULT</p>
+      <h2 id="resultTitle">和了</h2>
+      <p id="resultText"></p>
+      <div id="resultStats" class="result-stats"></div>
+      <button id="nextRoundButton" class="primary-button">再来一局 <span>→</span></button>
+    </div>
+  </div>
+
+  <script type="module" src="src/game.js"></script>
+</body>
+</html>
