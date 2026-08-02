@@ -12,6 +12,7 @@
   <div class="ambient ambient-b"></div>
   <main class="app-shell">
     <header class="topbar">
+      <a class="lobby-link" href="/" aria-label="返回游戏大厅">← <span>游戏大厅</span></a>
       <div class="brand">
         <span class="brand-mark">雀</span>
         <div><h1>麻雀</h1><p>MAHJONG</p></div>
@@ -69,6 +70,7 @@
           </div>
           <div id="rivers" class="rivers" aria-label="四家牌河"></div>
           <div id="tableCallout" class="table-callout hidden" aria-live="assertive">
+            <div id="winnerEmblem" class="winner-emblem hidden"><b id="winnerEmblemSeat">东</b><small id="winnerEmblemName">玩家</small></div>
             <strong id="tableCalloutMethod">荣和</strong>
             <span id="tableCalloutPlayer">玩家</span>
           </div>
@@ -124,6 +126,7 @@
         <div id="resultReason" class="result-reason"></div>
         <div id="humanPaymentNotice" class="human-payment-notice"></div>
         <p id="resultText"></p>
+        <div id="yakuHeading" class="yaku-heading"><strong>和牌役种</strong><span id="yakuSummary">役种明细</span></div>
         <div id="yakuList" class="yaku-list"></div>
         <div id="resultStats" class="result-stats"></div>
       </section>
