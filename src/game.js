@@ -500,7 +500,9 @@ function finishRound(winner, method, winTile, loser, suppliedResult = null) {
   renderSettlementMelds(winner);
   const yakuList = $('#yakuList');
   if (result) {
-    yakuList.innerHTML = result.yaku.map(item => `<div><span>${item.name}</span><b>${item.yakuman ? `${item.yakuman}倍役满` : `${item.han}番`}</b></div>`).join('');
+    yakuList.innerHTML = result.yaku.map(item => `<div><span>${item.name === '断幺九' ? '断幺' : item.name}：</span><b>${item.yakuman ? `${item.yakuman}倍役满` : `${item.han}番`}</b></div>`).join('');
+    $('#yakuHeading').classList.remove('hidden');
+    $('#yakuSummary').textContent = result.yakuman ? `${result.yakuman}倍役满` : `合计 ${result.han} 番`;
     const scoreLabel = result.yakuman ? result.limitName : `${result.fu}符 ${result.han}番${result.limitName ? ` · ${result.limitName}` : ''}`;
     $('#resultText').textContent = scoreLabel;
     const paymentText = method === '荣和' ? `${result.ron.toLocaleString()}点` : result.payments.each ? `${result.payments.each.toLocaleString()}点 ALL` : `庄家 ${result.payments.dealer.toLocaleString()} / 闲家 ${result.payments.child.toLocaleString()}`;
@@ -514,6 +516,7 @@ function finishRound(winner, method, winTile, loser, suppliedResult = null) {
     notice.textContent = humanDelta > 0 ? `你获得 ${humanDelta.toLocaleString()} 点` : humanDelta < 0 ? `你需要支付 ${Math.abs(humanDelta).toLocaleString()} 点` : '你本局没有点数变化';
   } else {
     yakuList.innerHTML = '';
+    $('#yakuHeading').classList.add('hidden');
     $('#resultText').textContent = '牌山已尽，本局无人和牌。';
     $('#resultStats').innerHTML = `<div>你的向听数<b>${Math.max(0, shanten(state.hands[0]))}</b></div><div>剩余牌<b>0</b></div>`;
     $('#humanPaymentNotice').className = 'human-payment-notice neutral';
@@ -529,7 +532,7 @@ function finishRound(winner, method, winTile, loser, suppliedResult = null) {
   $('#resultPhase').classList.remove('hidden');
   $('#scorePhase').classList.add('hidden');
   $('#nextRoundButton').innerHTML = '查看分数变化 <span>→</span>';
-  showWinAnnouncement(winner, method);
+  showWinAnnouncement(winner, method, result);
 }
 
 function renderSettlementHand(winner, method, winTile) {
@@ -580,7 +583,7 @@ function showTableAction(method, player, latin = method) {
   tableActionTimer = setTimeout(() => callout.classList.add('hidden'), latin === 'RIICHI' ? 1050 : 720);
 }
 
-function showWinAnnouncement(winner, method) {
+function showWinAnnouncement(winner, method, result = null) {
   clearTimeout(tableActionTimer);
   const callout = $('#tableCallout');
   const modal = $('#resultModal');
@@ -591,7 +594,14 @@ function showWinAnnouncement(winner, method) {
   const position = winner === null ? 'center' : positionFor(winner);
   callout.className = `table-callout win-callout win-seat-${position} ${method === '荣和' ? 'win-ron' : method === '自摸' ? 'win-tsumo' : 'win-draw'}`;
   $('#tableCalloutMethod').textContent = method === '荣和' ? '荣和' : method === '自摸' ? '自摸' : method === '流局' ? '流局' : '满贯';
-  $('#tableCalloutPlayer').textContent = winner === null ? '荒牌平局' : `${WIND_LABELS[seatWind(winner) - 27]}家 · ${playerName(winner)} 和牌`;
+  const emblem = $('#winnerEmblem');
+  emblem.classList.toggle('hidden', winner === null);
+  if (winner !== null) {
+    $('#winnerEmblemSeat').textContent = WIND_LABELS[seatWind(winner) - 27];
+    $('#winnerEmblemName').textContent = playerName(winner);
+  }
+  const leadingYaku = result?.yaku?.slice(0, 2).map(item => item.name === '断幺九' ? '断幺' : item.name).join(' · ');
+  $('#tableCalloutPlayer').textContent = winner === null ? '荒牌平局' : `${WIND_LABELS[seatWind(winner) - 27]}家 · ${playerName(winner)}${leadingYaku ? ` · ${leadingYaku}` : ''}`;
   const winnerTarget = winner === 0 ? document.querySelector('.player-zone') : winner === null ? null : document.querySelector(`.opponent.${position}`);
   winnerTarget?.classList.add('winning-seat-focus');
   callout.style.animation = 'none';
@@ -710,12 +720,15 @@ function meldElement(meld, settlement = false) {
   group.className = `meld-group meld-${meld.type}${settlement ? ' settlement-meld' : ''}`;
   let calledMarked = false;
   meld.tiles.forEach(tile => {
+    const slot = document.createElement('span');
+    slot.className = 'meld-tile-slot';
     const element = tileElement(tile, { button: false, compact: true });
     if (!calledMarked && tile === meld.calledTile) {
-      element.classList.add('called-tile');
+      slot.classList.add('called-tile-slot');
       calledMarked = true;
     }
-    group.appendChild(element);
+    slot.appendChild(element);
+    group.appendChild(slot);
   });
   return group;
 }
