@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#122a26">
   <title>麻雀 · 日麻 AI 教练</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=0.7.0">
 </head>
 <body>
   <div class="ambient ambient-a"></div>
@@ -72,6 +72,13 @@
           <div id="tableCallout" class="table-callout hidden" aria-live="assertive">
             <div id="winnerEmblem" class="winner-emblem hidden"><b id="winnerEmblemSeat">东</b><small id="winnerEmblemName">玩家</small></div>
             <strong id="tableCalloutMethod">荣和</strong>
+            <div id="callTransfer" class="call-transfer hidden">
+              <span><small>出牌</small><b id="callSource">北川</b></span>
+              <i>→</i>
+              <div id="callTile" class="call-transfer-tile" aria-hidden="true"></div>
+              <i>→</i>
+              <span><small>鸣牌</small><b id="callTarget">玩家</b></span>
+            </div>
             <span id="tableCalloutPlayer">玩家</span>
           </div>
         </div>
@@ -140,6 +147,6 @@
     </div>
   </div>
 
-  <script type="module" src="src/game.js"></script>
+  <script type="module" src="src/game.js?v=0.7.0"></script>
 </body>
 </html>

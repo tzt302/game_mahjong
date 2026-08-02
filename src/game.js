@@ -1,6 +1,7 @@
 import { TILE_LABELS, tileSuit, createWall, shuffle, isWinningHand, shanten, analyzeDiscards } from './engine.js';
 import { evaluateHand } from './scoring.js';
 import { tileFaceMarkup } from './tiles.js';
+import { canDiscardAfterRiichi, callAnnouncement } from './rules.js';
 
 const state = {
   playerCount: 4, mode: 'coach', matchType: 'east', maxRounds: 4, roundIndex: 0,
@@ -20,6 +21,7 @@ const messageBar = $('#messageBar');
 const WIND_LABELS = ['东', '南', '西', '北'];
 const NUMBER_LABELS = ['一', '二', '三', '四'];
 let tableActionTimer = null;
+const CALL_ANIMATION_MS = 1250;
 
 document.querySelectorAll('[data-group]').forEach(group => {
   group.addEventListener('click', event => {
@@ -197,11 +199,17 @@ function takeTurn(player) {
 
 function discardHuman(index) {
   if (!state.waitingForDiscard || state.over) return;
-  if (state.riichi[0] && state.riichiDiscardAt[0] < 0) {
-    const legalRiichiTiles = analyzeDiscards(state.hands[0], allVisible(), state.playerCount, 0).filter(item => item.shanten === 0).map(item => item.discard);
-    if (!legalRiichiTiles.includes(state.hands[0][index])) return setMessage('立直宣言后，只能打出保持听牌的牌');
-  } else if (state.riichi[0] && index !== state.lastDrawnIndex) {
-    return setMessage('立直后必须摸切刚摸到的牌');
+  const legalRiichiTiles = state.riichi[0] && state.riichiDiscardAt[0] < 0
+    ? analyzeDiscards(state.hands[0], allVisible(), state.playerCount, 0).filter(item => item.shanten === 0).map(item => item.discard)
+    : [];
+  const legalDiscard = canDiscardAfterRiichi({
+    riichi: state.riichi[0], riichiDiscardAt: state.riichiDiscardAt[0], index,
+    lastDrawnIndex: state.lastDrawnIndex, tile: state.hands[0][index], legalRiichiTiles
+  });
+  if (!legalDiscard) {
+    return setMessage(state.riichiDiscardAt[0] < 0
+      ? '立直宣言后，只能打出保持听牌的牌'
+      : '立直后必须摸切刚摸到的牌');
   }
   const tile = state.hands[0].splice(index, 1)[0];
   state.rinshan[0] = false;
@@ -349,14 +357,20 @@ function performHumanCall(call) {
   const calledTile = state.pendingRonTile;
   hideCallButtons();
   registerCall(0, call, from, calledTile);
-  showTableAction(({ chi: '吃', pon: '碰', kan: '杠' })[call.type], 0, call.type.toUpperCase());
+  const method = ({ chi: '吃', pon: '碰', kan: '杠' })[call.type];
+  showTableAction(method, 0, call.type.toUpperCase(), { from, tile: calledTile });
   state.turn = 0;
-  if (call.type === 'kan') return setTimeout(() => takeKanReplacement(0), 520);
-  state.waitingForDiscard = true;
-  state.lastDrawnIndex = -1;
-  handEl.classList.remove('hand-lock');
-  renderHand(); updateCoach();
-  setMessage(`${({ chi: '吃', pon: '碰' })[call.type]}成立：请选择一张牌打出`);
+  state.waitingForDiscard = false;
+  handEl.classList.add('hand-lock');
+  renderHand();
+  if (call.type === 'kan') return setTimeout(() => takeKanReplacement(0), CALL_ANIMATION_MS);
+  setTimeout(() => {
+    state.waitingForDiscard = true;
+    state.lastDrawnIndex = -1;
+    handEl.classList.remove('hand-lock');
+    renderHand(); updateCoach();
+    setMessage(`${method}成立：请选择一张牌打出`);
+  }, CALL_ANIMATION_MS);
 }
 
 function takeKanReplacement(player) {
@@ -414,9 +428,9 @@ function tryAiCall(tile, from) {
   const selected = candidates[0];
   if (!selected) return false;
   registerCall(selected.player, selected.call, from, tile);
-  showTableAction(({ chi: '吃', pon: '碰', kan: '杠' })[selected.call.type], selected.player, selected.call.type.toUpperCase());
-  if (selected.call.type === 'kan') setTimeout(() => takeKanReplacement(selected.player), 520);
-  else setTimeout(() => opponentDiscard(selected.player), 560);
+  showTableAction(({ chi: '吃', pon: '碰', kan: '杠' })[selected.call.type], selected.player, selected.call.type.toUpperCase(), { from, tile });
+  if (selected.call.type === 'kan') setTimeout(() => takeKanReplacement(selected.player), CALL_ANIMATION_MS);
+  else setTimeout(() => opponentDiscard(selected.player), CALL_ANIMATION_MS);
   return true;
 }
 
@@ -571,22 +585,35 @@ function renderSettlementMelds(winner) {
   state.melds[winner].forEach(meld => host.appendChild(meldElement(meld, true)));
 }
 
-function showTableAction(method, player, latin = method) {
+function showTableAction(method, player, latin = method, details = null) {
   clearTimeout(tableActionTimer);
   const callout = $('#tableCallout');
+  const transfer = $('#callTransfer');
+  $('#winnerEmblem').classList.add('hidden');
   $('#tableCalloutMethod').textContent = latin;
-  $('#tableCalloutPlayer').textContent = `${playerName(player)} · ${WIND_LABELS[seatWind(player) - 27]}家 · ${method}`;
-  callout.className = `table-callout action-callout ${latin === 'RIICHI' ? 'riichi-callout' : ''}`;
+  if (details && details.from !== null && details.from !== undefined) {
+    $('#callSource').textContent = playerName(details.from);
+    $('#callTarget').textContent = playerName(player);
+    $('#callTile').innerHTML = tileFaceMarkup(details.tile);
+    $('#callTile').setAttribute('aria-label', TILE_LABELS[details.tile]);
+    transfer.className = `call-transfer call-from-${positionFor(details.from)} call-to-${positionFor(player)}`;
+    $('#tableCalloutPlayer').textContent = callAnnouncement({ caller: playerName(player), from: playerName(details.from), method, tile: TILE_LABELS[details.tile] });
+  } else {
+    transfer.className = 'call-transfer hidden';
+    $('#tableCalloutPlayer').textContent = `${playerName(player)} · ${WIND_LABELS[seatWind(player) - 27]}家 · ${method}`;
+  }
+  callout.className = `table-callout action-callout ${details ? 'meld-callout' : ''} ${latin === 'RIICHI' ? 'riichi-callout' : ''}`;
   callout.style.animation = 'none';
   void callout.offsetWidth;
   callout.style.animation = '';
-  tableActionTimer = setTimeout(() => callout.classList.add('hidden'), latin === 'RIICHI' ? 1050 : 720);
+  tableActionTimer = setTimeout(() => callout.classList.add('hidden'), details ? CALL_ANIMATION_MS : latin === 'RIICHI' ? 1050 : 720);
 }
 
 function showWinAnnouncement(winner, method, result = null) {
   clearTimeout(tableActionTimer);
   const callout = $('#tableCallout');
   const modal = $('#resultModal');
+  $('#callTransfer').className = 'call-transfer hidden';
   document.querySelectorAll('.winning-seat-focus').forEach(element => element.classList.remove('winning-seat-focus'));
   $('#table').classList.add('win-freeze');
   modal.classList.add('hidden');
@@ -678,8 +705,20 @@ function tileElement(tile, options = {}) {
 function renderHand(animateDeal = false) {
   handEl.innerHTML = '';
   const best = state.mode === 'coach' && state.waitingForDiscard ? analyzeDiscards(state.hands[0], allVisible(), state.playerCount, state.melds[0].length)[0]?.discard : null;
+  const legalRiichiTiles = state.riichi[0] && state.riichiDiscardAt[0] < 0
+    ? analyzeDiscards(state.hands[0], allVisible(), state.playerCount, 0).filter(item => item.shanten === 0).map(item => item.discard)
+    : [];
   state.hands[0].forEach((tile, index) => {
     const element = tileElement(tile, { drawn: index === state.lastDrawnIndex, recommended: tile === best, entering: animateDeal });
+    const legalDiscard = canDiscardAfterRiichi({
+      riichi: state.riichi[0], riichiDiscardAt: state.riichiDiscardAt[0], index,
+      lastDrawnIndex: state.lastDrawnIndex, tile, legalRiichiTiles
+    });
+    if (state.waitingForDiscard && !legalDiscard) {
+      element.disabled = true;
+      element.classList.add('tile-locked');
+      element.title = `${TILE_LABELS[tile]}（立直后不可打出）`;
+    }
     element.addEventListener('click', () => discardHuman(index));
     handEl.appendChild(element);
   });
