@@ -305,6 +305,7 @@ function offerHumanResponse(from, tile, ronResult) {
   chiCalls.forEach(call => {
     const button = document.createElement('button');
     button.className = 'action-button call chi-choice';
+    button.dataset.actionEn = 'CHI';
     button.textContent = `吃 ${call.tiles.map(item => TILE_LABELS[item]).join('·')}`;
     button.addEventListener('click', () => performHumanCall(call));
     choices.appendChild(button);

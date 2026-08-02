@@ -94,14 +94,16 @@
         </div>
         <div id="messageBar" class="message-bar">请选择一张牌打出</div>
         <div id="hand" class="hand" aria-label="你的手牌"></div>
-        <div id="callChoices" class="call-choices hidden" aria-label="鸣牌选择"></div>
-        <div class="action-row">
-          <button id="riichiButton" class="action-button hidden">立直</button>
-          <button id="winButton" class="action-button win hidden">自摸</button>
-          <button id="ronButton" class="action-button win hidden">荣和</button>
-          <button id="ponButton" class="action-button call hidden">碰</button>
-          <button id="kanButton" class="action-button call hidden">杠</button>
-          <button id="skipButton" class="action-button hidden">跳过</button>
+        <div id="actionDock" class="action-dock" aria-label="可用操作">
+          <div id="callChoices" class="call-choices hidden" aria-label="吃牌组合"></div>
+          <div class="action-row">
+            <button id="riichiButton" class="action-button riichi-action hidden" data-action-en="RIICHI">立直</button>
+            <button id="winButton" class="action-button win tsumo-action hidden" data-action-en="TSUMO">自摸</button>
+            <button id="ronButton" class="action-button win ron-action hidden" data-action-en="RON">荣和</button>
+            <button id="ponButton" class="action-button call pon-action hidden" data-action-en="PON">碰</button>
+            <button id="kanButton" class="action-button call kan-action hidden" data-action-en="KAN">杠</button>
+            <button id="skipButton" class="action-button skip-action hidden" data-action-en="PASS">跳过</button>
+          </div>
         </div>
       </div>
     </section>
