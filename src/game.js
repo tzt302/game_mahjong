@@ -582,17 +582,29 @@ function showTableAction(method, player, latin = method) {
 function showWinAnnouncement(winner, method) {
   clearTimeout(tableActionTimer);
   const callout = $('#tableCallout');
-  callout.className = 'table-callout';
-  $('#tableCalloutMethod').textContent = method === '荣和' ? 'RON' : method === '自摸' ? 'TSUMO' : method === '流局' ? '流局' : '满贯';
-  $('#tableCalloutPlayer').textContent = winner === null ? '荒牌平局' : `${playerName(winner)} · ${WIND_LABELS[seatWind(winner) - 27]}家`;
-  callout.classList.remove('hidden');
+  const modal = $('#resultModal');
+  document.querySelectorAll('.winning-seat-focus').forEach(element => element.classList.remove('winning-seat-focus'));
+  $('#table').classList.add('win-freeze');
+  modal.classList.add('hidden');
+  modal.classList.remove('result-reveal');
+  const position = winner === null ? 'center' : positionFor(winner);
+  callout.className = `table-callout win-callout win-seat-${position} ${method === '荣和' ? 'win-ron' : method === '自摸' ? 'win-tsumo' : 'win-draw'}`;
+  $('#tableCalloutMethod').textContent = method === '荣和' ? '荣和' : method === '自摸' ? '自摸' : method === '流局' ? '流局' : '满贯';
+  $('#tableCalloutPlayer').textContent = winner === null ? '荒牌平局' : `${WIND_LABELS[seatWind(winner) - 27]}家 · ${playerName(winner)} 和牌`;
+  const winnerTarget = winner === 0 ? document.querySelector('.player-zone') : winner === null ? null : document.querySelector(`.opponent.${position}`);
+  winnerTarget?.classList.add('winning-seat-focus');
   callout.style.animation = 'none';
   void callout.offsetWidth;
   callout.style.animation = '';
+  tableActionTimer = setTimeout(() => callout.classList.add('win-callout-leaving'), winner === null ? 850 : 1450);
   setTimeout(() => {
     callout.classList.add('hidden');
-    $('#resultModal').classList.remove('hidden');
-  }, 950);
+    callout.classList.remove('win-callout-leaving');
+    winnerTarget?.classList.remove('winning-seat-focus');
+    $('#table').classList.remove('win-freeze');
+    modal.classList.remove('hidden');
+    modal.classList.add('result-reveal');
+  }, winner === null ? 1150 : 1850);
 }
 
 function showScoreComparison() {

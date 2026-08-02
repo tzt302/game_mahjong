@@ -172,6 +172,31 @@ button { font: inherit; }
 @keyframes callout-title { from { opacity: 0; transform: scale(1.7); filter: blur(6px); } to { opacity: 1; transform: scale(1); filter: none; } }
 @keyframes callout-line { from { transform: scaleX(0); opacity: 0; } to { transform: scaleX(1); opacity: 1; } }
 @keyframes callout-fade { 0%,75% { opacity: 1; } 100% { opacity: 0; } }
+.table.win-freeze .seat-river,.table.win-freeze .tile-walls,.table.win-freeze .table-center { transition: filter .35s ease,opacity .35s ease; filter: brightness(.42) saturate(.7); opacity: .62; }
+.win-callout { overflow: hidden; animation: win-stage-in .38s ease-out both; transition: opacity .38s ease,filter .38s ease,transform .38s ease; }
+.win-callout::before { inset: 0; left: 0; right: 0; top: 0; height: auto; background: repeating-linear-gradient(110deg,transparent 0 34px,rgba(255,255,255,.035) 35px 36px); animation: win-speed-lines .8s ease-out both; }
+.win-callout::after { left: 8%; right: 8%; top: 50%; height: 2px; background: linear-gradient(90deg,transparent,#fff3bc,transparent); box-shadow: 0 0 18px rgba(242,205,123,.85); animation: callout-line .65s ease both; }
+.win-callout strong { font-size: clamp(66px,9vw,112px); letter-spacing: .18em; color: #fff3bd; text-shadow: 0 0 8px #fff,0 0 28px rgba(234,192,95,.9),0 9px 30px #000; animation: win-method-strike .72s cubic-bezier(.12,.82,.18,1) both; }
+.win-callout span { padding: 7px 16px; border-radius: 999px; color: #fff7db; background: rgba(2,10,8,.72); font-size: clamp(14px,1.6vw,19px); font-weight: 800; text-shadow: 0 2px 8px #000; animation: win-name-in .5s .32s ease both; }
+.win-ron { background: radial-gradient(circle at 50% 50%,rgba(161,38,29,.78),rgba(14,8,7,.9) 58%,rgba(2,7,6,.96)); }
+.win-tsumo { background: radial-gradient(circle at 50% 50%,rgba(32,121,104,.72),rgba(7,24,20,.92) 58%,rgba(2,7,6,.96)); }
+.win-draw { background: radial-gradient(circle,rgba(87,93,80,.4),rgba(2,7,6,.94)); }
+.win-seat-top { background-position: center top; }
+.win-seat-bottom { background-position: center bottom; }
+.win-seat-left { background-position: left center; }
+.win-seat-right { background-position: right center; }
+.win-callout-leaving { opacity: 0; filter: blur(5px); transform: scale(1.035); }
+.opponent.winning-seat-focus { z-index: 14; }
+.opponent.winning-seat-focus .opponent-info { color: #fff9df; border: 2px solid #f1d080; background: rgba(77,47,12,.92); box-shadow: 0 0 0 6px rgba(241,208,128,.12),0 0 34px rgba(244,196,88,.75); animation: winner-seat-pulse .7s ease-in-out infinite alternate; }
+.player-zone.winning-seat-focus { z-index: 13; box-shadow: inset 0 3px 0 #efd17d,0 -12px 35px rgba(234,184,74,.35); animation: winner-zone-pulse .7s ease-in-out infinite alternate; }
+.modal.result-reveal { animation: result-modal-in .5s cubic-bezier(.16,.82,.2,1) both; }
+@keyframes win-stage-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes win-speed-lines { from { opacity: 0; transform: translateX(-80px); } to { opacity: 1; transform: none; } }
+@keyframes win-method-strike { 0% { opacity: 0; transform: scale(2.4) rotate(-3deg); filter: blur(10px); } 55% { opacity: 1; transform: scale(.9); filter: none; } 100% { transform: scale(1); } }
+@keyframes win-name-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes winner-seat-pulse { to { transform: scale(1.08); filter: brightness(1.2); } }
+@keyframes winner-zone-pulse { to { filter: brightness(1.16); } }
+@keyframes result-modal-in { from { opacity: 0; transform: scale(1.07); } to { opacity: 1; transform: none; } }
 
 .settlement-card { width: min(620px,94vw); min-height: 550px; padding: 34px 42px 30px; position: relative; overflow: hidden; text-align: left; }
 .settlement-glow { position: absolute; width: 340px; height: 340px; left: -100px; top: -150px; border-radius: 50%; background: rgba(218,175,83,.16); filter: blur(50px); pointer-events: none; }
