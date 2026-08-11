@@ -604,3 +604,93 @@ body {
 @media (max-width: 560px) {
   .hand .tile { box-shadow: 0 3px 0 #54c5b3,0 5px 0 #238b7e,0 7px 9px rgba(8,77,74,.22); }
 }
+
+/* Readable table scale: keep wide displays from shrinking the four seats visually. */
+@media (min-width: 851px) {
+  .table-wrap {
+    padding: 20px 24px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .table {
+    width: min(1120px, calc(100% - 48px), calc((100vh - 260px) * 1.72));
+    height: auto;
+    aspect-ratio: 1.72 / 1;
+    flex: 0 0 auto;
+    min-height: 430px;
+    max-height: 650px;
+    border-radius: 34px;
+  }
+  .opponent.top {
+    top: 9%;
+    transform: translateX(-50%);
+  }
+  .opponent.left,
+  .opponent.right {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .opponent.left { left: 7%; }
+  .opponent.right { right: 7%; }
+  .opponent-info {
+    min-width: 132px;
+    justify-content: center;
+    gap: 9px;
+    padding: 8px 13px;
+    border-width: 3px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 800;
+    box-shadow: 0 7px 0 rgba(6,107,104,.18), 0 13px 22px rgba(5,86,83,.16);
+  }
+  .opponent-info b { font-size: 14px; }
+  .riichi-state { padding: 4px 8px; font-size: 10px; }
+  .concealed-hand { margin-top: 10px; }
+  .back-tile {
+    width: 22px;
+    height: 35px;
+    margin-left: -2px;
+    border-width: 2px;
+    border-radius: 4px;
+  }
+  .opponent.left .concealed-hand,
+  .opponent.right .concealed-hand {
+    position: absolute;
+    top: 50%;
+    margin: 0;
+    flex-direction: column;
+    transform: translateY(-50%);
+  }
+  .opponent.left .concealed-hand { right: calc(100% + 13px); }
+  .opponent.right .concealed-hand { left: calc(100% + 13px); }
+  .opponent.left .back-tile,
+  .opponent.right .back-tile { margin: -13px 0 0; }
+  .opponent.left .back-tile:first-child,
+  .opponent.right .back-tile:first-child { margin-top: 0; }
+}
+
+@media (max-width: 560px) {
+  .opponent-info { min-width: 92px; justify-content: center; padding: 5px 8px; font-size: 10px; font-weight: 800; }
+  .opponent-info b { font-size: 11px; }
+  .riichi-state { font-size: 8px; }
+  .back-tile { width: clamp(14px,4vw,17px); height: clamp(22px,6.3vw,27px); }
+  .opponent.left,
+  .opponent.right { transform: translateY(-50%); }
+  .opponent.left { left: 12%; top: 37%; }
+  .opponent.right { right: 12%; top: 61%; }
+  .opponent.left .concealed-hand,
+  .opponent.right .concealed-hand {
+    position: absolute;
+    top: 50%;
+    margin: 0;
+    flex-direction: column;
+    transform: translateY(-50%);
+  }
+  .opponent.left .concealed-hand { right: calc(100% + 5px); }
+  .opponent.right .concealed-hand { left: calc(100% + 5px); }
+  .opponent.left .back-tile,
+  .opponent.right .back-tile { margin: -14px 0 0; }
+  .opponent.left .back-tile:first-child,
+  .opponent.right .back-tile:first-child { margin-top: 0; }
+}
